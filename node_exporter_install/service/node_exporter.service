@@ -1,0 +1,35 @@
+[Unit]
+Description=Prometheus Node Exporter
+Documentation=https://github.com/prometheus/node_exporter
+After=network.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+#PIDFile=/data/application/run/node_exporter.pid
+
+EnvironmentFile=/data/application/nodeexporter/node_exporter.conf
+ExecStart=/data/application/nodeexporter/node_exporter \
+  --collector.filesystem.ignored-fs-types=${collector_filesystem_ignored_fs_types} \
+  --collector.diskstats.ignored-devices=${collector_diskstats_ignored_devices} \
+  --collector.netstat.fields=${collector_netstat_fields} \
+  --collector.filesystem.ignored-mount-points=${collector_filesystem_ignored_mount_points}  \
+  --collector.netdev.ignored-devices=${collector_netdev_ignored_devices} \
+  --collector.netclass.ignored-devices=${collector_netclass_ignored_devices} \
+  --web.listen-address=:${nodeexporter_port} \
+  --log.level=${log_level} \
+  --web.telemetry-path=${web_telemetry_path} \
+  --collector.textfile.directory=${collector_textfile_directory} \
+  for en_collector in ${enable_collectors};do
+    --collector.${en_collector} \
+  done
+  for dis_collector in ${disable_collectors};do
+    --no-collector.${dis_collector} 
+  done
+ExecReload=/bin/kill -s HUP $MAINPID
+SyslogIdentifier=node_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
